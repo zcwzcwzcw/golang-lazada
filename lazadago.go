@@ -8,7 +8,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"io/ioutil"
-	"mime/multipart"
 	"net/http"
 	"net/url"
 	"sort"
@@ -32,6 +31,8 @@ const (
 	APIGatewayPH = "https://api.lazada.com.ph/rest"
 	// APIGatewayID endpoint
 	APIGatewayID = "https://api.lazada.co.id/rest"
+	// 授权url
+	APIAuthURL = "https://auth.lazada.com/oauth/authorize"
 )
 
 // ClientOptions params
@@ -176,10 +177,10 @@ func (lc *LazadaClient) Execute(apiName string, apiMethod string, bodyParams int
 	var err error
 	var contentType string
 
-	bodyData, err := json.Marshal(bodyParams)
-	if err != nil {
-		return nil, err
-	}
+	//bodyData, err := json.Marshal(bodyParams)
+	//if err != nil {
+	//	return nil, err
+	//}
 
 	// add query params
 	values := url.Values{}
@@ -188,46 +189,46 @@ func (lc *LazadaClient) Execute(apiName string, apiMethod string, bodyParams int
 	}
 
 	// POST handle
-	body := &bytes.Buffer{}
-	if apiMethod == http.MethodPost {
-		writer := multipart.NewWriter(body)
-		contentType = writer.FormDataContentType()
-		if len(lc.FileParams) > 0 {
-			// add formfile to handle file upload
-			for key, val := range lc.FileParams {
-				part, err := writer.CreateFormFile("image", key)
-				if err != nil {
-					return nil, err
-				}
-				_, err = part.Write(val)
-				if err != nil {
-					return nil, err
-				}
-			}
-		}
-
-		for key, val := range bodyData {
-			_ = writer.WriteField(string(key), string(val))
-		}
-
-		if err = writer.Close(); err != nil {
-			return nil, err
-		}
-	}
+	//body := &bytes.Buffer{}
+	//if apiMethod == http.MethodPost {
+	//	writer := multipart.NewWriter(body)
+	//	contentType = writer.FormDataContentType()
+	//	if len(lc.FileParams) > 0 {
+	//		// add formfile to handle file upload
+	//		for key, val := range lc.FileParams {
+	//			part, err := writer.CreateFormFile("image", key)
+	//			if err != nil {
+	//				return nil, err
+	//			}
+	//			_, err = part.Write(val)
+	//			if err != nil {
+	//				return nil, err
+	//			}
+	//		}
+	//	}
+	//
+	//	for key, val := range bodyData {
+	//		_ = writer.WriteField(key, val)
+	//	}
+	//
+	//	if err = writer.Close(); err != nil {
+	//		return nil, err
+	//	}
+	//}
 
 	// GET handle
-	if apiMethod == http.MethodGet {
-		for key, val := range lc.APIParams {
-			values.Add(key, val)
-		}
+	//if apiMethod == http.MethodGet {
+	for key, val := range lc.APIParams {
+		values.Add(key, val)
 	}
+	//}
 
 	apiPath := lc.getPath(apiName)
 	apiServerURL := lc.getServerURL()
 
 	values.Add("sign", lc.sign(apiPath))
 	fullURL := fmt.Sprintf("%s%s?%s", apiServerURL, apiPath, values.Encode())
-	req, err = http.NewRequest(apiMethod, fullURL, body)
+	req, err = http.NewRequest(apiMethod, fullURL, nil)
 
 	if err != nil {
 		return nil, err
@@ -256,6 +257,7 @@ func (lc *LazadaClient) Execute(apiName string, apiMethod string, bodyParams int
 
 // Client interface api
 type Client interface {
+	GetAuthURL(clientId, redirectURL, country string) (url string)
 	//=======================================================
 	// Shop
 	//=======================================================
@@ -278,6 +280,10 @@ type Client interface {
 	GetOrders() (*GetOrdersResponse, error)
 	GetOrderItems() (*GetOrderItemsResponse, error)
 	SetStatusToReadyToShip(*SetStatusToReadyToShipRequest) (*GetShopInfoResponse, error)
+}
+
+func (lc *LazadaClient) GetAuthURL(clientId, redirectURL, country string) (url string) {
+	return fmt.Sprintf("%v?response_type=code&force_auth=true&client_id=%v&redirect_uri=%v&country=%v", APIAuthURL, clientId, redirectURL, country)
 }
 
 //=======================================================
