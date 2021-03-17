@@ -207,7 +207,7 @@ func (lc *LazadaClient) Execute(apiName string, apiMethod string, bodyParams int
 		}
 
 		for key, val := range bodyData {
-			_ = writer.WriteField(key, val)
+			_ = writer.WriteField(string(key), string(val))
 		}
 
 		if err = writer.Close(); err != nil {
@@ -284,8 +284,8 @@ type Client interface {
 // Shop
 //=======================================================
 
-// GetSeller Use this call to get information of shop
-func (lc *LazadaClient) GetSeller() (resp *GetShopInfoResponse, err error) {
+// GetShopInfo Use this call to get information of shop
+func (lc *LazadaClient) GetShopInfo() (resp *GetShopInfoResponse, err error) {
 	b, err := lc.Execute("GetShopInfo", "GET", nil)
 
 	if err != nil {
