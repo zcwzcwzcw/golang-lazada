@@ -257,7 +257,6 @@ func (lc *LazadaClient) Execute(apiName string, apiMethod string, bodyParams int
 
 // Client interface api
 type Client interface {
-	GetAuthURL(clientId, redirectURL, country string) (url string)
 	//=======================================================
 	// Shop
 	//=======================================================
@@ -282,7 +281,7 @@ type Client interface {
 	SetStatusToReadyToShip(*SetStatusToReadyToShipRequest) (*GetShopInfoResponse, error)
 }
 
-func (lc *LazadaClient) GetAuthURL(clientId, redirectURL, country string) (url string) {
+func GetAuthURL(clientId, redirectURL, country string) (url string) {
 	return fmt.Sprintf("%v?response_type=code&force_auth=true&client_id=%v&redirect_uri=%v&country=%v", APIAuthURL, clientId, redirectURL, country)
 }
 
